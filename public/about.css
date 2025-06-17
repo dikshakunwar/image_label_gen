@@ -1,0 +1,94 @@
+body{
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #ffffff;
+  color: #1f2937;
+}
+.navbar{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #0f172a;
+  color: white;
+  padding: 1rem 2rem;
+}
+
+.logo{
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.navbar ul{
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+}
+
+.navbar a{
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.navbar a.active{
+  border-bottom: 2px solid #1d4ed8;
+  padding-bottom: 0.2rem;
+}
+
+footer{
+  background-color: #0f172a;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+}
+
+.about-page{
+  padding: 4rem 2rem;
+  background-color: #ffffff;
+  color: #1f2937;
+}
+
+.about-hero{
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.about-hero h1{
+  font-size: 2.5rem;
+  color: #1e3a8a;
+  margin-bottom: 1rem;
+}
+
+.about-hero p{
+  font-size: 1.2rem;
+  color: #334155;
+}
+
+.about-content{
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+
+.about-content h2{
+  color: #1d4ed8;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.about-content p{
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.about-content ul{
+  list-style: disc;
+  padding-left: 1.5rem;
+  color: #1f2937;
+}
+
+.about-content ul li{
+  margin-bottom: 0.5rem;
+}

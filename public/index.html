@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Label Generator</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">LabelGen.AI</div>
+    <nav>
+      <ul>
+        <li><a href="about.html">About</a></li>
+        <li><a href="#features">Features</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Automate Image Tagging<br />with AWS Rekognition</h1>
+      <p>Upload images and instantly generate smart labels using AI. Improve organization and retrieval effortlessly.</p>
+    </div>
+    <div class="hero-img">
+      <img src="image2.png" alt="AI illustration" />
+    </div>
+  </section>
+
+  <section class="upload" id="upload">
+    <h2>Upload Your Image</h2>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+      <input type="file" name="image" accept="image/*" id="image-input" required />
+      <br />
+      <button type="submit" class="btn">Upload Image</button>
+    </form>
+
+    <div class="preview-container">
+      <h3>Live Preview</h3>
+      <img id="image-preview" src="" alt="Image Preview" />
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="feature">
+      <h2>Smart Label Detection</h2>
+      <p>Detects objects, scenes, and text using Amazon Rekognition for fast and reliable image understanding.</p>
+    </div>
+    <div class="feature">
+      <h2>Easy Integration</h2>
+      <p>Use our minimal Node.js backend to integrate seamlessly with AWS Rekognition and S3.</p>
+    </div>
+    <div class="feature">
+      <h2>Cloud Storage Support</h2>
+      <p>Store and analyze images securely with S3. Scalable and efficient image management.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>Made using AWS Rekognition | © 2025 Image Label Generator</p>
+  </footer>
+
+  <script>
+    const input = document.getElementById('image-input');
+    const preview = document.getElementById('image-preview');
+
+    input.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  </script>
+</body>
+</html>
