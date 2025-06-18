@@ -19,8 +19,11 @@
 
     <h2>Detected Labels</h2>
     <div class="labels" id="label-results"></div>
-    <h2>Recognized Celebrities</h2>
-<div class="celebrities" id="celebrity-results"></div>
+    <div id="celebrity-section" style="display: none;">
+  <h2>Recognized Celebrities</h2>
+  <div class="celebrities" id="celebrity-results"></div>
+</div>
+
 
   </div>
 
@@ -43,6 +46,7 @@
     } catch (e) {
       console.error('Error parsing labels data:', e);
     }
+    const celebSection = document.getElementById('celebrity-section');
 
     try {
       celebrities = JSON.parse(decodeURIComponent(rawCelebs));
@@ -60,6 +64,11 @@
 
     // When image loads, add bounding boxes
     img.onload = () => {
+      if (celebrities.length > 0) {
+     celebSection.style.display = 'block';  // Show if celebrities found
+    } else {
+    celebSection.style.display = 'none';   // Hide if none found
+  }
       const imgWidth = img.clientWidth;
       const imgHeight = img.clientHeight;
 
