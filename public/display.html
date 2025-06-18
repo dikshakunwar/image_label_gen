@@ -5,30 +5,150 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Image Labels</title>
   <link rel="stylesheet" href="display.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+    .button-panel {
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: flex-start;
+    }
+    .container {
+      max-width: 960px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      flex-grow: 1;
+    }
+    .image-wrapper {
+  text-align: center;
+  position: relative;
+  max-width: 100%;
+  /* Remove overflow: auto to avoid scrollbars */
+  /* overflow: auto; */
+  border-radius: 8px;
+  /* Add this to make sure image doesn't overflow vertically */
+  max-height: 80vh; /* or whatever max height you want */
+}
+
+.image-wrapper img {
+  max-width: 100%;
+  max-height: 80vh; /* constrain image height */
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: 8px;
+  object-fit: contain; /* ensures image scales properly inside container */
+}
+
+    /* New circular button with arrow */
+    .hover-button {
+      background: #4FA3DF;
+      color: white;
+      padding: 12px 40px 12px 20px; /* more right padding for arrow */
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 30px; /* fully rounded */
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      transition: background-color 0.3s ease;
+      user-select: none;
+      white-space: nowrap;
+      box-sizing: border-box;
+      min-width: 180px;
+    }
+    .hover-button:hover {
+      background-color: #3a7ecf;
+    }
+    /* Arrow shape on right side */
+    .hover-button::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: 16px;
+      transform: translateY(-50%);
+      border-style: solid;
+      border-width: 6px 0 6px 10px;
+      border-color: transparent transparent transparent white;
+      pointer-events: none;
+      transition: border-color 0.3s ease;
+    }
+    .hover-button:hover::after {
+      border-color: transparent transparent transparent #e0e0e0;
+    }
+    .info-box {
+      display: none;
+      position: absolute;
+      left: 220px;
+      top: 40px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      z-index: 99;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      min-width: 200px;
+      animation: fadeIn 0.5s ease-in-out;
+      color: #4FA3DF;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .bounding-box {
+      position: absolute;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      transition: border-color 0.3s;
+    }
+    .bounding-box:hover {
+      border-color: #00e676;
+    }
+    #hover-label {
+      position: absolute;
+      display: none;
+      background: linear-gradient(to right, #00c6ff, #0072ff);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      pointer-events: none;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 20;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+  </style>
 </head>
 <body>
+  <div class="button-panel">
+    <button class="hover-button" onmouseenter="showInfo('label')" onmouseleave="hideInfo('label')">Detected Labels</button>
+    <button class="hover-button" id="celeb-button" style="display:none" onmouseenter="showInfo('celeb')" onmouseleave="hideInfo('celeb')">Recognized Celebrities</button>
+  </div>
   <div class="container">
     <h1>Image Label Results</h1>
-
     <div class="image-section">
-      <div class="image-wrapper" id="image-wrapper" style="position: relative;">
-  <img id="uploaded-image" src="" alt="Uploaded Image" />
-  <div id="hover-label" style="position: absolute; display: none; background: #000000cc; color: #fff; padding: 4px 8px; border-radius: 4px; pointer-events: none; font-size: 14px; z-index: 20;"></div>
-</div>
+      <div class="image-wrapper" id="image-wrapper">
+        <img id="uploaded-image" src="" alt="Uploaded Image" />
+        <div id="hover-label"></div>
+      </div>
     </div>
-
-    <h2>Detected Labels</h2>
-    <div class="labels" id="label-results"></div>
-    <div id="celebrity-section" style="display: none;">
-  <h2>Recognized Celebrities</h2>
-  <div class="celebrities" id="celebrity-results"></div>
-</div>
-
-
+    <div class="info-box" id="label-info"></div>
+    <div class="info-box" id="celeb-info"></div>
   </div>
 
   <script>
-    // Parse query params safely
     function getQueryParam(param) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(param);
@@ -46,7 +166,6 @@
     } catch (e) {
       console.error('Error parsing labels data:', e);
     }
-    const celebSection = document.getElementById('celebrity-section');
 
     try {
       celebrities = JSON.parse(decodeURIComponent(rawCelebs));
@@ -57,56 +176,40 @@
     const img = document.getElementById('uploaded-image');
     const imageWrapper = document.getElementById('image-wrapper');
     const hoverLabel = document.getElementById('hover-label');
-    const labelResultsDiv = document.getElementById('label-results');
-    const celebResultsDiv = document.getElementById('celebrity-results');
+    const labelInfo = document.getElementById('label-info');
+    const celebInfo = document.getElementById('celeb-info');
+    const celebButton = document.getElementById('celeb-button');
 
     img.src = imageUrl;
 
-    // When image loads, add bounding boxes
     img.onload = () => {
-      if (celebrities.length > 0) {
-     celebSection.style.display = 'block';  // Show if celebrities found
-    } else {
-    celebSection.style.display = 'none';   // Hide if none found
-  }
       const imgWidth = img.clientWidth;
       const imgHeight = img.clientHeight;
 
-      function createBox(box, label, color = '#00e676') {
+      function createBox(box, label, color) {
         const div = document.createElement('div');
         div.classList.add('bounding-box');
 
-        // Bounding box dimensions relative to image
         div.style.width = `${box.Width * imgWidth}px`;
         div.style.height = `${box.Height * imgHeight}px`;
         div.style.left = `${box.Left * imgWidth}px`;
         div.style.top = `${box.Top * imgHeight}px`;
-        div.style.borderColor = 'transparent';
 
         div.dataset.label = label;
-        div.style.position = 'absolute';
 
-        // Show tooltip on hover
-        div.addEventListener('mouseenter', (e) => {
-          div.style.borderColor = color;
+        div.addEventListener('mouseenter', () => {
           hoverLabel.innerText = label;
           hoverLabel.style.display = 'block';
+          div.style.borderColor = color;
         });
 
         div.addEventListener('mousemove', (e) => {
           const rect = imageWrapper.getBoundingClientRect();
-          // Position tooltip near mouse pointer, but inside image wrapper
           let left = e.clientX - rect.left + 15;
           let top = e.clientY - rect.top + 5;
 
-          // Prevent tooltip from going outside right boundary
           if (left + hoverLabel.offsetWidth > rect.width) {
-            left = rect.width - hoverLabel.offsetWidth - 10;
-          }
-
-          // Prevent tooltip from going above top boundary
-          if (top + hoverLabel.offsetHeight > rect.height) {
-            top = rect.height - hoverLabel.offsetHeight - 10;
+            left = e.clientX - rect.left - hoverLabel.offsetWidth - 15;
           }
 
           hoverLabel.style.left = `${left}px`;
@@ -114,39 +217,52 @@
         });
 
         div.addEventListener('mouseleave', () => {
-          div.style.borderColor = 'transparent';
           hoverLabel.style.display = 'none';
+          div.style.borderColor = 'transparent';
         });
 
         imageWrapper.appendChild(div);
       }
 
-      // Add bounding boxes for detected labels
       labels.forEach(label => {
         label.boxes.forEach(box => {
           createBox(box, `${label.name} (${label.confidence}%)`, '#00e676');
         });
 
-        // Also add label info below image
-        const labelBox = document.createElement('div');
-        labelBox.className = 'label-box';
-        labelBox.innerHTML = `<strong>${label.name}</strong><span>Confidence: ${label.confidence}%</span>`;
-        labelResultsDiv.appendChild(labelBox);
+        const item = document.createElement('div');
+        item.innerHTML = `<strong>${label.name}</strong>: ${label.confidence}%`;
+        labelInfo.appendChild(item);
       });
 
-      // Add bounding boxes for celebrities
-      celebrities.forEach(celeb => {
-        if (celeb.box) {
-          createBox(celeb.box, `👤 ${celeb.name} (${celeb.confidence}%)`, '#ff4081');
+      if (celebrities.length > 0) {
+        celebButton.style.display = 'inline-block';
+        celebrities.forEach(celeb => {
+          if (celeb.box) {
+            createBox(celeb.box, `  ${celeb.name} (${celeb.confidence}%)`, '#ff4081');
 
-          // Show celebrity info below image
-          const celebBox = document.createElement('div');
-          celebBox.className = 'label-box';
-          celebBox.innerHTML = `<strong> ${celeb.name}</strong><span>Confidence: ${celeb.confidence}%</span>`;
-          celebResultsDiv.appendChild(celebBox);
-        }
-      });
+            const item = document.createElement('div');
+            item.innerHTML = `<strong>${celeb.name}</strong>: ${celeb.confidence}%`;
+            celebInfo.appendChild(item);
+          }
+        });
+      }
     };
+
+    function showInfo(type) {
+      if (type === 'label') {
+        labelInfo.style.display = 'block';
+      } else {
+        celebInfo.style.display = 'block';
+      }
+    }
+
+    function hideInfo(type) {
+      if (type === 'label') {
+        labelInfo.style.display = 'none';
+      } else {
+        celebInfo.style.display = 'none';
+      }
+    }
   </script>
 </body>
 </html>
