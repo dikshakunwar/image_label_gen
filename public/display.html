@@ -11,62 +11,131 @@
     <h1>Image Label Results</h1>
 
     <div class="image-section">
-      <div class="image-wrapper">
-        <img id="uploaded-image" src="" alt="Uploaded Image" />
-      </div>
+      <div class="image-wrapper" id="image-wrapper" style="position: relative;">
+  <img id="uploaded-image" src="" alt="Uploaded Image" />
+  <div id="hover-label" style="position: absolute; display: none; background: #000000cc; color: #fff; padding: 4px 8px; border-radius: 4px; pointer-events: none; font-size: 14px; z-index: 20;"></div>
+</div>
     </div>
 
     <h2>Detected Labels</h2>
     <div class="labels" id="label-results"></div>
+    <h2>Recognized Celebrities</h2>
+<div class="celebrities" id="celebrity-results"></div>
+
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const imageUrl = urlParams.get("image");
-    const data = JSON.parse(decodeURIComponent(urlParams.get("data")));
+    // Parse query params safely
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
 
-    const img = document.getElementById("uploaded-image");
-    const labelResults = document.getElementById("label-results");
-    const imageWrapper = document.querySelector(".image-wrapper");
+    const imageUrl = getQueryParam('image');
+    const rawData = getQueryParam('data');
+    const rawCelebs = getQueryParam('celebs') || '[]';
+
+    let labels = [];
+    let celebrities = [];
+
+    try {
+      labels = JSON.parse(decodeURIComponent(rawData));
+    } catch (e) {
+      console.error('Error parsing labels data:', e);
+    }
+
+    try {
+      celebrities = JSON.parse(decodeURIComponent(rawCelebs));
+    } catch (e) {
+      console.error('Error parsing celebrities data:', e);
+    }
+
+    const img = document.getElementById('uploaded-image');
+    const imageWrapper = document.getElementById('image-wrapper');
+    const hoverLabel = document.getElementById('hover-label');
+    const labelResultsDiv = document.getElementById('label-results');
+    const celebResultsDiv = document.getElementById('celebrity-results');
 
     img.src = imageUrl;
 
-    data.forEach(label => {
-      const labelBox = document.createElement("div");
-      labelBox.classList.add("label-box");
-
-      const confidence = parseFloat(label.confidence);
-
-      labelBox.innerHTML = `
-        <strong>${label.name}</strong>
-        <div class="confidence-bar-container" aria-label="Confidence level">
-          <div class="confidence-bar" style="width: ${confidence}%;"></div>
-        </div>
-        <span>Confidence: ${confidence}%</span>
-        <span>Bounding Boxes: ${label.boxes.length}</span>
-      `;
-      labelResults.appendChild(labelBox);
-    });
-
+    // When image loads, add bounding boxes
     img.onload = () => {
       const imgWidth = img.clientWidth;
       const imgHeight = img.clientHeight;
 
-      document.querySelectorAll(".bounding-box").forEach(box => box.remove());
+      function createBox(box, label, color = '#00e676') {
+        const div = document.createElement('div');
+        div.classList.add('bounding-box');
 
-      data.forEach(label => {
-        label.boxes.forEach(box => {
-          const div = document.createElement("div");
-          div.classList.add("bounding-box");
-          div.setAttribute("data-label", label.name);
+        // Bounding box dimensions relative to image
+        div.style.width = `${box.Width * imgWidth}px`;
+        div.style.height = `${box.Height * imgHeight}px`;
+        div.style.left = `${box.Left * imgWidth}px`;
+        div.style.top = `${box.Top * imgHeight}px`;
+        div.style.borderColor = 'transparent';
 
-          div.style.width = `${box.Width * imgWidth}px`;
-          div.style.height = `${box.Height * imgHeight}px`;
-          div.style.left = `${box.Left * imgWidth}px`;
-          div.style.top = `${box.Top * imgHeight}px`;
+        div.dataset.label = label;
+        div.style.position = 'absolute';
 
-          imageWrapper.appendChild(div);
+        // Show tooltip on hover
+        div.addEventListener('mouseenter', (e) => {
+          div.style.borderColor = color;
+          hoverLabel.innerText = label;
+          hoverLabel.style.display = 'block';
         });
+
+        div.addEventListener('mousemove', (e) => {
+          const rect = imageWrapper.getBoundingClientRect();
+          // Position tooltip near mouse pointer, but inside image wrapper
+          let left = e.clientX - rect.left + 15;
+          let top = e.clientY - rect.top + 5;
+
+          // Prevent tooltip from going outside right boundary
+          if (left + hoverLabel.offsetWidth > rect.width) {
+            left = rect.width - hoverLabel.offsetWidth - 10;
+          }
+
+          // Prevent tooltip from going above top boundary
+          if (top + hoverLabel.offsetHeight > rect.height) {
+            top = rect.height - hoverLabel.offsetHeight - 10;
+          }
+
+          hoverLabel.style.left = `${left}px`;
+          hoverLabel.style.top = `${top}px`;
+        });
+
+        div.addEventListener('mouseleave', () => {
+          div.style.borderColor = 'transparent';
+          hoverLabel.style.display = 'none';
+        });
+
+        imageWrapper.appendChild(div);
+      }
+
+      // Add bounding boxes for detected labels
+      labels.forEach(label => {
+        label.boxes.forEach(box => {
+          createBox(box, `${label.name} (${label.confidence}%)`, '#00e676');
+        });
+
+        // Also add label info below image
+        const labelBox = document.createElement('div');
+        labelBox.className = 'label-box';
+        labelBox.innerHTML = `<strong>${label.name}</strong><span>Confidence: ${label.confidence}%</span>`;
+        labelResultsDiv.appendChild(labelBox);
+      });
+
+      // Add bounding boxes for celebrities
+      celebrities.forEach(celeb => {
+        if (celeb.box) {
+          createBox(celeb.box, `👤 ${celeb.name} (${celeb.confidence}%)`, '#ff4081');
+
+          // Show celebrity info below image
+          const celebBox = document.createElement('div');
+          celebBox.className = 'label-box';
+          celebBox.innerHTML = `<strong> ${celeb.name}</strong><span>Confidence: ${celeb.confidence}%</span>`;
+          celebResultsDiv.appendChild(celebBox);
+        }
       });
     };
   </script>

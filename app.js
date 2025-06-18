@@ -9,6 +9,7 @@ import {
   S3Client,
   PutObjectCommand
 } from '@aws-sdk/client-s3';
+import { RecognizeCelebritiesCommand } from '@aws-sdk/client-rekognition';
 import {
   RekognitionClient,
   DetectLabelsCommand
@@ -57,6 +58,7 @@ app.post('/upload', upload.single('image'), async (req, res) => {
     const ext = path.extname(req.file.originalname);
     const imageName = req.file.filename + ext;
 
+    // Upload to S3
     await s3Client.send(new PutObjectCommand({
       Bucket: bucketName,
       Key: imageName,
@@ -65,22 +67,16 @@ app.post('/upload', upload.single('image'), async (req, res) => {
       ACL: 'public-read'
     }));
 
-    console.log(`Image uploaded successfully: ${imageName}`);
+    const imageUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${imageName}`;
 
-    const detectParams = {
-      Image: {
-        S3Object: {
-          Bucket: bucketName,
-          Name: imageName
-        }
-      },
+    // Detect general labels
+    const labelResponse = await rekognitionClient.send(new DetectLabelsCommand({
+      Image: { S3Object: { Bucket: bucketName, Name: imageName } },
       MaxLabels: 10,
       MinConfidence: 70.0,
-    };
+    }));
 
-    const response = await rekognitionClient.send(new DetectLabelsCommand(detectParams));
-
-    const labelsWithBoxes = response.Labels
+    const labelsWithBoxes = labelResponse.Labels
       .map(label => ({
         name: label.Name,
         confidence: label.Confidence.toFixed(2),
@@ -90,19 +86,32 @@ app.post('/upload', upload.single('image'), async (req, res) => {
       }))
       .filter(label => label.boxes.length > 0);
 
-    const imageUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${imageName}`;
+    // Detect celebrity faces
+    const celebResponse = await rekognitionClient.send(new RecognizeCelebritiesCommand({
+      Image: { S3Object: { Bucket: bucketName, Name: imageName } }
+    }));
 
+    const celebrities = celebResponse.CelebrityFaces.map(celeb => ({
+      name: celeb.Name,
+      confidence: celeb.MatchConfidence.toFixed(2),
+      urls: celeb.Urls,
+      box: celeb.Face.BoundingBox
+    }));
+
+    // Cleanup temp file
     fs.unlink(req.file.path, err => {
       if (err) console.error('Failed to delete temp file:', err);
     });
-    
-    res.redirect(`/display?image=${encodeURIComponent(imageUrl)}&data=${encodeURIComponent(JSON.stringify(labelsWithBoxes))}`);
+
+    // Redirect with both labels and celebrities
+    res.redirect(`/display?image=${encodeURIComponent(imageUrl)}&data=${encodeURIComponent(JSON.stringify(labelsWithBoxes))}&celebs=${encodeURIComponent(JSON.stringify(celebrities))}`);
 
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Error processing image.');
   }
 });
+
 
 app.get('/display', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'display.html'));
