@@ -1,276 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Image Label Generator</title>
-  <link rel="stylesheet" href="styles.css" />
-  <style>
-    :root {
-      --primary-color: #1e3a8a;
-      --secondary-color: #f0f4f8;
-      --text-color: #1f2937;
-      --btn-hover: #2563eb;
-      --card-bg: #ffffff;
-      --shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--secondary-color);
-      color: var(--text-color);
-      line-height: 1.6;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    .navbar {
-      background: var(--primary-color);
-      color: white;
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: var(--shadow);
-    }
-
-    .navbar .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
-
-    .navbar ul {
-      display: flex;
-      gap: 1.5rem;
-      list-style: none;
-    }
-
-    .navbar a {
-      color: white;
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-
-    .navbar a:hover {
-      color: #cbd5e1;
-    }
-
-    .hero {
-      display: flex;
-      flex-direction: column-reverse;
-      align-items: center;
-      text-align: center;
-      padding: 4rem 2rem;
-      background: linear-gradient(120deg, #dbeafe, #eff6ff);
-    }
-
-    .hero-content h1 {
-      font-size: 2.5rem;
-      color: var(--primary-color);
-    }
-
-    .hero-content p {
-      font-size: 1.1rem;
-      margin-top: 1rem;
-      max-width: 600px;
-    }
-
-    .hero-img img {
-      max-width: 400px;
-      margin: 2rem 0;
-    }
-
-    .upload {
-      padding: 3rem 2rem;
-      text-align: center;
-    }
-
-    .upload input[type="file"] {
-      padding: 0.5rem;
-      margin-top: 1rem;
-      border: 2px dashed #9ca3af;
-      border-radius: 8px;
-      background-color: white;
-      cursor: pointer;
-    }
-
-    .btn {
-      background-color: var(--primary-color);
-      color: white;
-      padding: 0.7rem 1.5rem;
-      margin-top: 1rem;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .btn:hover {
-      background-color: var(--btn-hover);
-    }
-
-    .preview-container {
-      margin-top: 2rem;
-    }
-
-    #image-preview {
-      max-width: 100%;
-      max-height: 300px;
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      display: none;
-      margin-top: 1rem;
-    }
-
-    .features {
-  display: flex;
-  justify-content: space-evenly; /* Equal spacing between items including sides */
-  align-items: stretch;
-  text-align: center;
-  padding: 2rem; /* Fixed unit for padding */
-  background-color: #f1f5f9;
-  flex-wrap: wrap;
-  gap: 2rem; /* Equal spacing between rows and columns */
-}
-
-    .feature {
-      background: var(--card-bg);
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-      transition: transform 0.3s;
-    }
-
-    .feature:hover {
-      transform: translateY(-5px);
-    }
-
-    .feature h2 {
-      color: var(--primary-color);
-      margin-bottom: 0.5rem;
-    }
-
-    footer {
-      background: var(--primary-color);
-      color: white;
-      text-align: center;
-      padding: 1.5rem 2rem;
-      margin-top: 3rem;
-    }
-    .upload-box {
-  background-color: #ffffff;
-  max-width: 800px; /* increased from 600px */
-  margin: auto;
-  padding: 3rem; /* increased padding */
-  border-radius: 20px; /* slightly more rounded */
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12); /* stronger shadow */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.upload-box:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-}
-
-.upload-box h2 {
-  font-size: 2rem; /* slightly larger heading */
-  margin-bottom: 1rem;
-}
-
-.upload input[type="file"] {
-  padding: 0.2;
-  font-size: 1rem;
-  margin-top: 1.2rem;
-  width: 40%;
-}
-
-.btn {
-  margin-top: 1.5rem;
-}
-
-  </style>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>login</title>
+  <link rel="stylesheet" href="./style.css" />
+  
+  <!-- Amazon Cognito SDKs -->
+  <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.2.0/dist/amazon-cognito-identity.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/amazon-cognito-identity-js/6.2.0/aws-cognito-sdk.min.js"></script>
 </head>
+
 <body>
-  <header class="navbar">
-    <div class="logo">LabelGen.AI</div>
-    <nav>
-      <ul>
-        <li><a href="about.html">About</a></li>
-        <li><a href="#features">Features</a></li>
-      </ul>
-    </nav>
-  </header>
 
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Automate Image Tagging<br />with AWS Rekognition</h1>
-      <p>Upload images and instantly generate smart labels using AI. Improve organization and retrieval effortlessly.</p>
+  <div class="wrapper">
+    <!-- Sign Up Form -->
+    <div class="form-wrapper sign-up">
+      <form id="signupForm">
+        <h2>Sign Up</h2>
+        <div class="input-group">
+          <input type="text" id="signupUsername" required />
+          <label for="signupUsername">Username</label>
+        </div>
+        <div class="input-group">
+          <input type="email" id="signupEmail" required />
+          <label for="signupEmail">Email</label>
+        </div>
+        <div class="input-group">
+          <input type="password" id="signupPassword" required />
+          <label for="signupPassword">Password</label>
+        </div>
+        <button type="submit" class="btn">Sign Up</button>
+        <div class="sign-link">
+          <p>Already have an account? <a href="#" class="signIn-link">Sign In</a></p>
+        </div>
+      </form>
     </div>
-    <div class="hero-img">
-      <img src="image2.png" alt="AI illustration" />
-    </div>
-  </section>
 
-  <section class="upload" id="upload">
-  <div class="upload-box">
-    <h2>Upload Your Image</h2>
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-      <input type="file" name="image" accept="image/*" id="image-input" required />
-      <br />
-      <button type="submit" class="btn">Upload Image</button>
-    </form>
+    <div id="confirmationPopup" class="popup" style="display:none;">
+  <div class="popup-content">
+    <h3>Confirm Your Email</h3>
+    <p>Please enter the confirmation code sent to your email.</p>
+    <input type="text" id="confirmationCodeInput" placeholder="Confirmation Code" />
+    <button id="confirmCodeBtn">Confirm</button>
+    <button id="cancelConfirmBtn" style="margin-left:10px;">Cancel</button>
+  </div>
+</div>
 
-    <div class="preview-container">
-      <h3>Live Preview</h3>
-      <img id="image-preview" src="" alt="Image Preview" />
+
+
+    <!-- Login Form -->
+    <div class="form-wrapper sign-in">
+      <form id="loginForm">
+        <h2>Login</h2>
+        <div class="input-group">
+          <input type="text" id="loginUsername" required />
+          <label for="loginUsername">Username</label>
+        </div>
+        <div class="input-group">
+          <input type="password" id="loginPassword" required />
+          <label for="loginPassword">Password</label>
+        </div>
+        <button type="submit" class="btn">Login</button>
+        <div class="sign-link">
+          <p>Don't have an account? <a href="#" class="signUp-link">Sign Up</a></p>
+        </div>
+      </form>
     </div>
   </div>
-</section>
 
-
-  <section class="features" id="features">
-    <div class="feature">
-      <h2>Smart Label Detection</h2>
-      <p>Detects objects, scenes, and text using Amazon Rekognition for fast and reliable image understanding.</p>
-    </div>
-    <div class="feature">
-      <h2>Easy Integration</h2>
-      <p>Use our minimal Node.js backend to integrate seamlessly with AWS Rekognition and S3.</p>
-    </div>
-    <div class="feature">
-      <h2>Cloud Storage Support</h2>
-      <p>Store and analyze images securely with S3. Scalable and efficient image management.</p>
-    </div>
-  </section>
-
-  <footer>
-    <p>Made using AWS Rekognition | © 2025 Image Label Generator</p>
-  </footer>
-
-  <script>
-    const input = document.getElementById('image-input');
-    const preview = document.getElementById('image-preview');
-
-    input.addEventListener('change', (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          preview.src = e.target.result;
-          preview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  </script>
+  <!-- Your AWS Cognito and UI Script -->
+  <script src="./auth-config.js"></script>
+  <script src="./script.js"></script>
 </body>
+
 </html>

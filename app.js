@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from 'express';
+import session from 'express-session';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
@@ -9,14 +10,12 @@ import {
   S3Client,
   PutObjectCommand
 } from '@aws-sdk/client-s3';
-import { RecognizeCelebritiesCommand } from '@aws-sdk/client-rekognition';
 import {
   RekognitionClient,
-  DetectLabelsCommand
+  DetectLabelsCommand,
+  RecognizeCelebritiesCommand
 } from '@aws-sdk/client-rekognition';
-import {
-  fileURLToPath
-} from 'url';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +23,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = 3000;
 
+// S3 client
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -32,6 +32,7 @@ const s3Client = new S3Client({
   },
 });
 
+// Rekognition client
 const rekognitionClient = new RekognitionClient({
   region: process.env.REKOGNITION_REGION,
   credentials: {
@@ -40,17 +41,62 @@ const rekognitionClient = new RekognitionClient({
   },
 });
 
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/src', express.static(path.join(__dirname, 'src'))); // Serve login UI files
 
-const upload = multer({
-  dest: 'uploads/'
-});
+app.use(session({
+  secret: 'your-secret-key', // change to secure random in prod
+  resave: false,
+  saveUninitialized: false,
+}));
 
-app.get('/', (req, res) => {
+// 🔐 Auth middleware
+function requireAuth(req, res, next) {
+  if (req.session && req.session.isAuthenticated) {
+    next();
+  } else {
+    res.redirect('/login');
+  }
+}
+
+// 👤 Login page
+// Update this route
+app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.post('/upload', upload.single('image'), async (req, res) => {
+
+// 👤 Handle login from frontend (after Cognito token is received)
+app.post('/session-login', (req, res) => {
+  const { token } = req.body;
+
+  // OPTIONAL: Validate token using AWS Cognito public keys here
+  if (token) {
+    req.session.isAuthenticated = true;
+    res.status(200).send('Login successful');
+  } else {
+    res.status(400).send('Invalid login');
+  }
+});
+
+// 👤 Logout
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/login');
+});
+
+// ✅ Default route redirects to login
+app.get('/', (req, res) => {
+  res.redirect('/login');
+});
+
+// 📤 Image Upload (protected)
+const upload = multer({ dest: 'uploads/' });
+
+app.post('/upload', requireAuth, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).send('No image uploaded!');
 
   try {
@@ -69,7 +115,7 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 
     const imageUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${imageName}`;
 
-    // Detect general labels
+    // Detect labels
     const labelResponse = await rekognitionClient.send(new DetectLabelsCommand({
       Image: { S3Object: { Bucket: bucketName, Name: imageName } },
       MaxLabels: 10,
@@ -98,26 +144,24 @@ app.post('/upload', upload.single('image'), async (req, res) => {
       box: celeb.Face.BoundingBox
     }));
 
-    // Cleanup temp file
+    // Delete local file
     fs.unlink(req.file.path, err => {
       if (err) console.error('Failed to delete temp file:', err);
     });
 
-    // Redirect with both labels and celebrities
+    // Redirect to display with results
     res.redirect(`/display?image=${encodeURIComponent(imageUrl)}&data=${encodeURIComponent(JSON.stringify(labelsWithBoxes))}&celebs=${encodeURIComponent(JSON.stringify(celebrities))}`);
-
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Error processing image.');
   }
 });
 
-
-app.get('/display', (req, res) => {
+// 🖼 Display result (protected)
+app.get('/display', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'display.html'));
 });
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${port}`);
 });
-

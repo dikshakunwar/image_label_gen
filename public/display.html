@@ -5,135 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Image Labels</title>
   <link rel="stylesheet" href="display.css" />
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f0f2f5;
-      margin: 0;
-      padding: 0;
-      display: flex;
-    }
-    .button-panel {
-      padding: 20px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      align-items: flex-start;
-    }
-    .container {
-  width: 950px;
-  margin: 20px auto;
-  padding: 20px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  flex-grow: 1;
-  min-height: 80%; /* ✅ add this to fix height */
-  overflow: hidden;  /* ✅ prevent internal expansion */
-}
-
-    .image-wrapper {
-  text-align: center;
-  position: relative;
-  max-width: 100%;
-  /* Remove overflow: auto to avoid scrollbars */
-  /* overflow: auto; */
-  border-radius: 8px;
-  /* Add this to make sure image doesn't overflow vertically */
-  max-height: 60%; /* or whatever max height you want */
-  object-fit: contain;
-}
-
-.image-wrapper img {
-  max-width: 100%;
-  max-height: 80vh; /* constrain image height */
-  height: 60%;
-  display: block;
-  margin: 0 0;
-  border-radius: 8px;
-  object-fit: contain; /* ensures image scales properly inside container */
-}
-
-    /* New circular button with arrow */
-    .hover-button {
-      background: #4FA3DF;
-      color: white;
-      padding: 12px 40px 12px 20px; /* more right padding for arrow */
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 30px; /* fully rounded */
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      transition: background-color 0.3s ease;
-      user-select: none;
-      white-space: nowrap;
-      box-sizing: border-box;
-      min-width: 180px;
-    }
-    .hover-button:hover {
-      background-color: #3a7ecf;
-    }
-    /* Arrow shape on right side */
-    .hover-button::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      right: 16px;
-      transform: translateY(-50%);
-      border-style: solid;
-      border-width: 6px 0 6px 10px;
-      border-color: transparent transparent transparent white;
-      pointer-events: none;
-      transition: border-color 0.3s ease;
-    }
-    .hover-button:hover::after {
-      border-color: transparent transparent transparent #e0e0e0;
-    }
-    .info-box {
-      display: none;
-      position: absolute;
-      left: 220px;
-      top: 40px;
-      background: #ffffff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 10px;
-      z-index: 99;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      min-width: 200px;
-      animation: fadeIn 0.5s ease-in-out;
-      color: #4FA3DF;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateX(-10px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    .bounding-box {
-      position: absolute;
-      border: 2px solid transparent;
-      border-radius: 6px;
-      transition: border-color 0.3s;
-    }
-    .bounding-box:hover {
-      border-color: #00e676;
-    }
-    #hover-label {
-      position: absolute;
-      display: none;
-      background: linear-gradient(to right, #00c6ff, #0072ff);
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 6px;
-      pointer-events: none;
-      font-size: 14px;
-      font-weight: 500;
-      z-index: 20;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    }
-  </style>
 </head>
 <body>
   <div class="button-panel">
@@ -187,70 +58,87 @@
     img.src = imageUrl;
 
     img.onload = () => {
-      const imgWidth = img.clientWidth;
-      const imgHeight = img.clientHeight;
+  const wrapperRect = imageWrapper.getBoundingClientRect();
+  const naturalWidth = img.naturalWidth;
+  const naturalHeight = img.naturalHeight;
 
-      function createBox(box, label, color) {
-        const div = document.createElement('div');
-        div.classList.add('bounding-box');
+  const displayedWidth = img.clientWidth;
+  const displayedHeight = img.clientHeight;
 
-        div.style.width = `${box.Width * imgWidth}px`;
-        div.style.height = `${box.Height * imgHeight}px`;
-        div.style.left = `${box.Left * imgWidth}px`;
-        div.style.top = `${box.Top * imgHeight}px`;
+  const ratioX = displayedWidth / naturalWidth;
+  const ratioY = displayedHeight / naturalHeight;
 
-        div.dataset.label = label;
+  // Calculate actual offsets due to 'contain' scaling
+  const scale = Math.min(wrapperRect.width / naturalWidth, wrapperRect.height / naturalHeight);
 
-        div.addEventListener('mouseenter', () => {
-          hoverLabel.innerText = label;
-          hoverLabel.style.display = 'block';
-          div.style.borderColor = color;
-        });
+  const offsetX = (wrapperRect.width - naturalWidth * scale) / 2;
+  const offsetY = (wrapperRect.height - naturalHeight * scale) / 2;
 
-        div.addEventListener('mousemove', (e) => {
-          const rect = imageWrapper.getBoundingClientRect();
-          let left = e.clientX - rect.left + 15;
-          let top = e.clientY - rect.top + 5;
+  function createBox(box, label, color) {
+    const div = document.createElement('div');
+    div.classList.add('bounding-box');
 
-          if (left + hoverLabel.offsetWidth > rect.width) {
-            left = e.clientX - rect.left - hoverLabel.offsetWidth - 15;
-          }
+    const boxWidth = box.Width * naturalWidth * scale;
+    const boxHeight = box.Height * naturalHeight * scale;
+    const boxLeft = box.Left * naturalWidth * scale + offsetX;
+    const boxTop = box.Top * naturalHeight * scale + offsetY;
 
-          hoverLabel.style.left = `${left}px`;
-          hoverLabel.style.top = `${top}px`;
-        });
+    div.style.width = `${boxWidth}px`;
+    div.style.height = `${boxHeight}px`;
+    div.style.left = `${boxLeft}px`;
+    div.style.top = `${boxTop}px`;
 
-        div.addEventListener('mouseleave', () => {
-          hoverLabel.style.display = 'none';
-          div.style.borderColor = 'transparent';
-        });
+    div.dataset.label = label;
 
-        imageWrapper.appendChild(div);
+    div.addEventListener('mouseenter', () => {
+      hoverLabel.innerText = label;
+      hoverLabel.style.display = 'block';
+      div.style.borderColor = color;
+    });
+
+    div.addEventListener('mousemove', (e) => {
+      const rect = imageWrapper.getBoundingClientRect();
+      let left = e.clientX - rect.left + 15;
+      let top = e.clientY - rect.top + 5;
+
+      if (left + hoverLabel.offsetWidth > rect.width) {
+        left = e.clientX - rect.left - hoverLabel.offsetWidth - 15;
       }
 
-      labels.forEach(label => {
-        label.boxes.forEach(box => {
-          createBox(box, `${label.name} (${label.confidence}%)`, '#00e676');
-        });
+      hoverLabel.style.left = `${left}px`;
+      hoverLabel.style.top = `${top}px`;
+    });
 
+    div.addEventListener('mouseleave', () => {
+      hoverLabel.style.display = 'none';
+      div.style.borderColor = 'transparent';
+    });
+
+    imageWrapper.appendChild(div);
+  }
+
+  labels.forEach(label => {
+    label.boxes.forEach(box => {
+      createBox(box, `${label.name} (${label.confidence}%)`, '#00e676');
+    });
+
+    const item = document.createElement('div');
+    item.innerHTML = `<strong>${label.name}</strong>: ${label.confidence}%`;
+    labelInfo.appendChild(item);
+  });
+
+  if (celebrities.length > 0) {
+    celebButton.style.display = 'inline-block';
+    celebrities.forEach(celeb => {
+      if (celeb.box) {
+        createBox(celeb.box, `${celeb.name} (${celeb.confidence}%)`, '#ff4081');
         const item = document.createElement('div');
-        item.innerHTML = `<strong>${label.name}</strong>: ${label.confidence}%`;
-        labelInfo.appendChild(item);
-      });
-
-      if (celebrities.length > 0) {
-        celebButton.style.display = 'inline-block';
-        celebrities.forEach(celeb => {
-          if (celeb.box) {
-            createBox(celeb.box, `  ${celeb.name} (${celeb.confidence}%)`, '#ff4081');
-
-            const item = document.createElement('div');
-            item.innerHTML = `<strong>${celeb.name}</strong>: ${celeb.confidence}%`;
-            celebInfo.appendChild(item);
-          }
-        });
+        item.innerHTML = `<strong>${celeb.name}</strong>: ${celeb.confidence}%`;
+        celebInfo.appendChild(item);
       }
-    };
+    });
+  }
+};
 
     function showInfo(type) {
       if (type === 'label') {

@@ -1,14 +1,25 @@
+:root {
+  --primary-color: #0f172a;       /* Deep navy */
+  --secondary-color: #ffffff;     /* White */
+  --accent-blue: #1e3a8a;         /* Bright navy for headings */
+  --light-bg: #f0f4f8;            /* Light background */
+  --highlight-blue: #4FA3DF;      /* Soft sky blue */
+  --hover-blue: #3a7ecf;          /* Button hover */
+  --box-border: #e0e7ff;          /* Light border */
+  --label-highlight: #00e676;
+}
+
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 html, body {
   height: 100%;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f9fafe;
-  color: #1f2937;
+  background-color: var(--light-bg);
+  color: var(--primary-color);
   line-height: 1.6;
   display: flex;
   justify-content: center;
@@ -16,114 +27,155 @@ html, body {
   padding: 40px 0;
 }
 
+/* Headings */
 h1, h2 {
   text-align: center;
-  color: #1e3a8a;
+  color: var(--accent-blue);
   margin-bottom: 24px;
 }
 
 h1 {
   font-size: 2.5rem;
 }
-
 h2 {
   font-size: 1.75rem;
   margin-top: 40px;
 }
 
-.image-section {
+/* Layout */
+.button-panel {
+  padding: 20px 10px;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 40px;
-  position: relative;
+  flex-direction: column;
+  gap: 15px;
+  align-items: flex-start;
 }
 
-.image-wrapper {
-  position: relative;
-  display: inline-block;
-  width: 90%;
-  max-width: 700px; /* Increased size */
-}
-
-#uploaded-image {
-  width: 90%;
-  height: 50%;
-  display: block;
+.container {
+  width: 950px;
+  margin: 20px auto;
+  padding: 20px;
+  background: var(--secondary-color);
   border-radius: 12px;
-  align-items: center;
-  border: 4px solid #e0e7ff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  flex-grow: 1;
+  min-height: 80%;
+  overflow: hidden;
+}
+
+/* Image */
+.image-wrapper {
+  text-align: center;
+  position: relative;
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden; /* ensures bounding boxes & label don't overflow */
+  border-radius: 8px;
+}
+
+.image-wrapper img {
+  width: 100%;              /* full width */
+  max-height: 70vh;         /* scales with viewport height */
+  display: block;
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 4px solid var(--box-border);
   box-shadow: 0 8px 20px rgba(30, 58, 138, 0.1);
 }
 
-/* Bounding Box Styling */
+
+/* Bounding Box */
 .bounding-box {
   position: absolute;
-  border: 2px solid #00e676;
-  pointer-events: auto;
-  border-radius: 4px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  transition: border-color 0.3s;
   z-index: 10;
 }
 
+.bounding-box:hover {
+  border-color: var(--label-highlight);
+}
+
 /* Hover Tooltip */
-.hover-label {
+#hover-label {
   position: absolute;
-  background: #000000dd;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 14px;
   display: none;
+  background: var(--accent-blue); /* Use navy blue from your theme */
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
   pointer-events: none;
+  font-size: 14px;
+  font-weight: 500;
   z-index: 20;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* Labels list below image */
-.labels {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
-  padding-top: 20px;
+
+/* Fancy Button */
+.hover-button {
+  background: var(--accent-blue); /* Bright navy */
+  color: var(--secondary-color); /* White */
+  padding: 12px 40px 12px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 30px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.3s ease;
+  user-select: none;
+  white-space: nowrap;
+  box-sizing: border-box;
+  min-width: 200px;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1); /* subtle navy shadow */
 }
 
-.label-box {
-  background: #eff6ff;
-  padding: 20px;
-  border-left: 6px solid #3b82f6;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
-  transition: transform 0.2s ease;
+.hover-button:hover {
+  background-color: var(--hover-blue); /* Lighter navy on hover */
 }
 
-.label-box:hover {
-  transform: translateY(-4px);
+/* Arrow shape */
+.hover-button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  border-style: solid;
+  border-width: 6px 0 6px 10px;
+  border-color: transparent transparent transparent var(--secondary-color);
+  pointer-events: none;
+  transition: border-color 0.3s ease;
 }
 
-.label-box strong {
-  display: block;
-  font-size: 1.2rem;
-  color: #1e40af;
-  margin-bottom: 8px;
+.hover-button:hover::after {
+  border-color: transparent transparent transparent #e2e8f0;
 }
 
-.label-box span {
-  display: block;
-  font-size: 0.95rem;
-  color: #11151b;
-  margin-top: 4px;
-}
-
-.confidence-bar-container {
-  width: 100%;
-  background-color: #d1d5db;
+/* Info Box (tooltip panel) */
+.info-box {
+  display: none;
+  position: absolute;
+  left: 220px;
+  top: 40px;
+  background: var(--secondary-color);
+  border: 1px solid #ccc;
   border-radius: 8px;
-  overflow: hidden;
-  margin: 8px 0;
-  height: 14px;
+  padding: 10px;
+  z-index: 99;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  min-width: 200px;
+  animation: fadeIn 0.5s ease-in-out;
+  color: var(--highlight-blue);
 }
 
-.confidence-bar {
-  height: 100%;
-  background-color: #3b82f6;
-  transition: width 0.4s ease;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
 }
