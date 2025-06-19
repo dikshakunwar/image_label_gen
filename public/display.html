@@ -21,14 +21,17 @@
       align-items: flex-start;
     }
     .container {
-      max-width: 960px;
-      margin: 20px auto;
-      padding: 20px;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      flex-grow: 1;
-    }
+  width: 950px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  flex-grow: 1;
+  min-height: 80%; /* ✅ add this to fix height */
+  overflow: hidden;  /* ✅ prevent internal expansion */
+}
+
     .image-wrapper {
   text-align: center;
   position: relative;
@@ -37,15 +40,16 @@
   /* overflow: auto; */
   border-radius: 8px;
   /* Add this to make sure image doesn't overflow vertically */
-  max-height: 80vh; /* or whatever max height you want */
+  max-height: 60%; /* or whatever max height you want */
+  object-fit: contain;
 }
 
 .image-wrapper img {
   max-width: 100%;
   max-height: 80vh; /* constrain image height */
-  height: auto;
+  height: 60%;
   display: block;
-  margin: 0 auto;
+  margin: 0 0;
   border-radius: 8px;
   object-fit: contain; /* ensures image scales properly inside container */
 }
