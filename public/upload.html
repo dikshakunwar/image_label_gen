@@ -10,11 +10,21 @@
   <header class="navbar">
     <div class="logo">LabelGen.AI</div>
     <nav>
-      <ul>
+      <ul class="nav-links">
         <li><a href="about.html">About</a></li>
-        <li><a href="#features">Features</a></li>
       </ul>
     </nav>
+    <div class="profile">
+      <button class="profile-btn" id="profileBtn">
+        <span class="profile-name">...</span> ▼
+      </button>
+      <div class="profile-dropdown" id="profileDropdown">
+        <p><strong>Logged in as:</strong></p>
+        <p class="profile-current">...</p>
+        <hr />
+        <a href="./index.html">Logout</a>
+      </div>
+    </div>
   </header>
 
   <section class="hero">
@@ -28,21 +38,20 @@
   </section>
 
   <section class="upload" id="upload">
-  <div class="upload-box">
-    <h2>Upload Your Image</h2>
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-      <input type="file" name="image" accept="image/*" id="image-input" required />
-      <br />
-      <button type="submit" class="btn">Upload Image</button>
-    </form>
+    <div class="upload-box">
+      <h2>Upload Your Image</h2>
+      <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" accept="image/*" id="image-input" required />
+        <br />
+        <button type="submit" class="btn">Upload Image</button>
+      </form>
 
-    <div class="preview-container">
-      <h3>Live Preview</h3>
-      <img id="image-preview" src="" alt="Image Preview" />
+      <div class="preview-container">
+        <h3>Live Preview</h3>
+        <img id="image-preview" src="" alt="Image Preview" />
+      </div>
     </div>
-  </div>
-</section>
-
+  </section>
 
   <section class="features" id="features">
     <div class="feature">
@@ -64,20 +73,70 @@
   </footer>
 
   <script>
+    // Elements
     const input = document.getElementById('image-input');
     const preview = document.getElementById('image-preview');
+    const profileBtn = document.getElementById('profileBtn');
+    const profileDropdown = document.getElementById('profileDropdown');
 
+    // Toggle profile dropdown
+    profileBtn.addEventListener('click', () => {
+      profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Close dropdown if clicking outside
+    window.addEventListener('click', (e) => {
+      if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+        profileDropdown.style.display = 'none';
+      }
+    });
+
+    // Image preview
     input.addEventListener('change', (event) => {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
           preview.src = e.target.result;
           preview.style.display = 'block';
         };
         reader.readAsDataURL(file);
       }
     });
+
+    // Get token from localStorage
+    const idToken = localStorage.getItem('idToken');
+    console.log("idToken:", idToken);
+
+    // Redirect to login if no token found
+    if (!idToken) {
+      alert("You are not logged in. Redirecting to login page.");
+      window.location.href = './index.html';
+    }
+
+    // Decode JWT token payload
+    function parseJwt(token) {
+      try {
+        return JSON.parse(atob(token.split('.')[1]));
+      } catch (e) {
+        return null;
+      }
+    }
+
+    if (idToken) {
+      const decoded = parseJwt(idToken);
+      console.log("Decoded token:", decoded);
+
+const name = decoded?.['name'] || decoded?.['cognito:username'] || decoded?.['username'] || 'UnknownUser';
+
+      // Update profile UI with username
+      document.querySelector('.profile-name').textContent = name;
+const profileCurrent = document.querySelector('.profile-current');
+if (profileCurrent) {
+  profileCurrent.textContent = name;
+}
+
+    }
   </script>
 </body>
 </html>

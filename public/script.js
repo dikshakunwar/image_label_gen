@@ -19,13 +19,16 @@ if (signUpLink && signInLink && wrapper) {
 document.getElementById('signupForm').addEventListener('submit', function (e) {
   e.preventDefault();
 
-  const username = document.getElementById('signupUsername').value;
+  const name = document.getElementById('signupName').value;
   const email = document.getElementById('signupEmail').value;
   const password = document.getElementById('signupPassword').value;
 
   const attributeList = [
+    new AmazonCognitoIdentity.CognitoUserAttribute({ Name: 'name', Value: name }),
     new AmazonCognitoIdentity.CognitoUserAttribute({ Name: 'email', Value: email })
   ];
+
+  const username = email;  // Use email as Cognito username
 
   userPool.signUp(username, password, attributeList, null, function (err, result) {
     if (err) {
@@ -33,13 +36,13 @@ document.getElementById('signupForm').addEventListener('submit', function (e) {
       return;
     }
 
-   document.getElementById('confirmationPopup').style.display = 'flex';
-
-// Save the username to use for confirmation
-window.cognitoUsername = username;
-window.cognitoUserPool = userPool;
+    document.getElementById('confirmationPopup').style.display = 'flex';
+    window.cognitoUsername = username;
+    window.cognitoUserPool = userPool;
   });
 });
+
+
 
 // LOGIN FUNCTIONALITY
 document.getElementById('loginForm').addEventListener('submit', function (e) {
@@ -62,21 +65,25 @@ document.getElementById('loginForm').addEventListener('submit', function (e) {
 
   cognitoUser.authenticateUser(authenticationDetails, {
     onSuccess: function (result) {
-      // Send token to backend to establish session
-      fetch('/session-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: result.getIdToken().getJwtToken()
-        })
-      }).then(res => {
-        if (res.ok) {
-          window.location.href = './upload.html'; // Protected homepage
-        } else {
-          alert("Session setup failed. Please try again.");
-        }
-      });
-    },
+  const idToken = result.getIdToken().getJwtToken();
+
+  // ✅ Store ID token in localStorage for later use
+  localStorage.setItem('idToken', idToken);
+
+  // Send token to backend to establish session
+  fetch('/session-login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: idToken })
+  }).then(res => {
+    if (res.ok) {
+      window.location.href = './upload.html'; // Protected homepage
+    } else {
+      alert("Session setup failed. Please try again.");
+    }
+  });
+},
+
 
     onFailure: function (err) {
       alert(err.message || JSON.stringify(err));
